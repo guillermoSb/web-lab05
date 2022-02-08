@@ -27,7 +27,7 @@ body {
   height: 200px;
   margin-bottom: 24px;
   overflow-x: hidden;
-  overflow-y: auto;
+  overflow-y: hidden;
   flex: 1;
 }
 

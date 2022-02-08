@@ -10,7 +10,14 @@
         bar: "bar",
         barInput: "bar_input",
         barButton: "bar_button",
+        bubbleContainer: "bubble_container",
+        bubble: "bubble",
       };
+      const contentTypes = {
+        text: "txt",
+        image: "img",
+      };
+      const createDiv = () => document.createElement("div");
       const dynamicStyles = {
         buttonNormal: () => {
           return `
@@ -49,17 +56,96 @@
             box-shadow: none;
             `;
         },
+        bubbleContainer: (type) => {
+          return `
+                justify-content: ${type == "right" ? "end" : "start"};
+
+            `;
+        },
+        bubbleColor: (type) => {
+          return `
+                background-color: ${
+                  type == "right" ? "rgb(83, 144, 217)" : "rgb(105, 48, 195)"
+                };
+            `;
+        },
+        bubbleHover: (type) => {
+          return `
+                box-shadow: 0 0 4px 2px ${
+                  type == "right"
+                    ? "rgba(83, 144, 217, 0.5)"
+                    : "rgba(105, 48, 195, 0.5)"
+                };
+
+            `;
+        },
+        bubbleNormal: (contentType) => {
+          return `
+            padding: ${contentType === contentTypes.text ? "10px 15px" : "8px"};
+            border-radius: 20px;
+            color: #fff;
+            width: fit-content;
+            max-width: 50%;
+            display: block;
+            justify-self: center;
+            line-height: 1.5rem;
+            transition: 0.5s box-shadow;
+            overflow: visible;
+        `;
+        },
+        bubbleImage: () => {
+          return `
+                max-width: 100%;
+                border-radius: 20px;
+            `;
+        },
+      };
+
+      const createBubble = (content, type, contentType = contentTypes.text) => {
+        const bubbleContainer = createDiv();
+        bubbleContainer.classList.add(classes.bubbleContainer);
+        const bubble = createDiv();
+        bubble.classList.add(classes.bubble);
+        bubbleContainer.appendChild(bubble);
+        bubbleContainer.style.cssText =
+          `
+            width: 100%;
+            display: flex;
+            margin-bottom: 10px;
+            overflow: visible;
+        ` + dynamicStyles.bubbleContainer(type);
+        bubble.style.cssText =
+          dynamicStyles.bubbleNormal(contentType) +
+          dynamicStyles.bubbleColor(type);
+        bubble.addEventListener("mouseenter", () => {
+          bubble.style.cssText += dynamicStyles.bubbleHover(type);
+        });
+        bubble.addEventListener("mouseleave", () => {
+          bubble.style.cssText =
+            dynamicStyles.bubbleNormal(contentType) +
+            dynamicStyles.bubbleColor(type);
+        });
+        if (contentType === contentTypes.text) {
+          bubble.innerHTML = content;
+        } else if (contentType === contentTypes.image) {
+          const image = document.createElement("img");
+          image.setAttribute("src", content);
+          image.setAttribute("alt", content);
+          image.style.cssText = dynamicStyles.bubbleImage();
+          bubble.appendChild(image); // Custom padding when rendering images
+        }
+        return bubbleContainer;
       };
       // Creating the DOM Initial Nodes
       const createInitialElements = () => {
-        let chatContainer = document.createElement("div");
+        let chatContainer = createDiv();
         chatContainer.classList.add(classes.chat);
         // Messages
-        let messagesContainer = document.createElement("div");
+        let messagesContainer = createDiv();
         messagesContainer.classList.add(classes.messages);
         chatContainer.appendChild(messagesContainer);
         // Bottom Bar
-        let barContainer = document.createElement("div");
+        let barContainer = createDiv();
         barContainer.classList.add(classes.bar);
         // Bottom bar input
         let messageInput = document.createElement("input");
@@ -120,6 +206,17 @@
         const messageButton = document.getElementById("send");
         messageButton.style.cssText = dynamicStyles.buttonNormal();
       };
+      const createTestBubbles = () => {
+        const messages = document.getElementsByClassName("messages")[0];
+        const bubbleContainer1 = createBubble("Hello!", "right");
+        const bubbleContainer2 = createBubble(
+          "https://c.tenor.com/wb-sYWqJarUAAAAC/the-office.gif",
+          "left",
+          contentTypes.image
+        );
+        messages.appendChild(bubbleContainer1);
+        messages.appendChild(bubbleContainer2);
+      };
       const createDynamicStyles = () => {
         const messageInput = document.getElementById("message");
         messageInput.addEventListener("focus", () => {
@@ -137,10 +234,37 @@
           sendButton.style.cursor = "pointer"; // Keep the pointer
         });
       };
+      const createSendEventListeners = () => {
+        const messageInput = document.getElementById("message");
+        const messageButton = document.getElementById("send");
+        const messages = document.getElementsByClassName("messages")[0];
+        messageButton.addEventListener("click", () => {
+          const message = messageInput.value;
+          if (message && message.length > 0) {
+            messages.appendChild(createBubble(message, "right"));
+            messages.scrollTop = messages.scrollHeight;
+            messageInput.value = ""; // reset the value
+          }
+        });
+        messageInput.addEventListener("keyup", (event) => {
+          // Number 13 is the "Enter" key on the keyboard
+          if (event.keyCode === 13) {
+            // Cancel the default action, if needed
+            event.preventDefault();
+            messageButton.click();
+          }
+        });
+      };
+
+      const sendMessage = (content) => {
+        createBubble(content, "right");
+      };
       // Creating the DOM Elements Styles
       createInitialElements();
       createChatStyles();
       createDynamicStyles();
+      createSendEventListeners();
+      createTestBubbles();
       // Chat Logic
     </script>
   </body>
