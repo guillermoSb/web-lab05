@@ -1,0 +1,147 @@
+<html>
+  <head>
+    <!-- <link rel="stylesheet" href="styles.css" /> -->
+  </head>
+  <body>
+    <script type="application/javascript">
+      const classes = {
+        chat: "chat",
+        messages: "messages",
+        bar: "bar",
+        barInput: "bar_input",
+        barButton: "bar_button",
+      };
+      const dynamicStyles = {
+        buttonNormal: () => {
+          return `
+            border-radius: 50%;
+            color: #ffff;
+            border: none;
+            background-color: #48bfe3;
+            padding: 10px;
+            box-shadow: 0 0 4px 2px rgba(83, 144, 217, 0.5);
+            transition: all 0.2s;
+        `;
+        },
+        inputNormal: () => {
+          return `
+            border-radius: 24px;
+            border: none;
+            background-color: rgba(83, 144, 217, 0.2);
+            padding: 10px 20px;
+            flex: 1;
+            margin-right: 24px;
+        `;
+        },
+        inputFocus: () => {
+          return `
+                outline: none;
+            `;
+        },
+        buttonHover: () => {
+          return `
+                cursor: pointer;
+            `;
+        },
+        buttonActive: () => {
+          return `
+            cursor: pointer;
+            box-shadow: none;
+            `;
+        },
+      };
+      // Creating the DOM Initial Nodes
+      const createInitialElements = () => {
+        let chatContainer = document.createElement("div");
+        chatContainer.classList.add(classes.chat);
+        // Messages
+        let messagesContainer = document.createElement("div");
+        messagesContainer.classList.add(classes.messages);
+        chatContainer.appendChild(messagesContainer);
+        // Bottom Bar
+        let barContainer = document.createElement("div");
+        barContainer.classList.add(classes.bar);
+        // Bottom bar input
+        let messageInput = document.createElement("input");
+        messageInput.setAttribute("placeholder", "Escribe tu mensaje: ");
+        messageInput.setAttribute("type", "text");
+        messageInput.id = "message";
+        messageInput.classList.add(classes.barInput);
+        barContainer.appendChild(messageInput);
+        // Bottom bar button
+        let messageButton = document.createElement("button");
+        messageButton.id = "send";
+        messageButton.innerHTML = "→";
+        messageButton.classList.add(classes.barButton);
+        barContainer.appendChild(messageButton);
+        chatContainer.appendChild(barContainer);
+        // Appending all the DOM Initial Nodes
+        document.body.appendChild(chatContainer);
+      };
+      const createChatStyles = () => {
+        document.body.style.cssText += `
+          background-color: #edf2f4;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+      `;
+
+        const chat = document.getElementsByClassName(classes.chat)[0];
+        chat.style.cssText += `
+          border-radius: 24px;
+          width: 70%;
+          height: 60vh;
+          border: 2px solid #000;
+          display: flex;
+          flex-direction: column;
+          justify-content: end;
+          padding: 24px;
+      `;
+
+        const messages = document.getElementsByClassName(classes.messages)[0];
+        messages.style.cssText += `
+        width: 100%;
+        height: 200px;
+        margin-bottom: 24px;
+        overflow-x: hidden;
+        overflow-y: auto;
+        flex: 1;
+        `;
+        const bar = document.getElementsByClassName(classes.bar)[0];
+        bar.style.cssText += `
+        align-self: flex-end;
+        justify-self: center;
+        display: flex;
+        justify-content: space-between;
+        width: 100%;
+        `;
+        const messageInput = document.getElementById("message");
+        message.style.cssText = dynamicStyles.inputNormal();
+        const messageButton = document.getElementById("send");
+        messageButton.style.cssText = dynamicStyles.buttonNormal();
+      };
+      const createDynamicStyles = () => {
+        const messageInput = document.getElementById("message");
+        messageInput.addEventListener("focus", () => {
+          messageInput.style.cssText += dynamicStyles.inputFocus();
+        });
+        const sendButton = document.getElementById("send");
+        sendButton.addEventListener("mouseover", () => {
+          sendButton.style.cssText += dynamicStyles.buttonHover();
+        });
+        sendButton.addEventListener("mousedown", () => {
+          sendButton.style.cssText += dynamicStyles.buttonActive();
+        });
+        sendButton.addEventListener("mouseup", () => {
+          sendButton.style.cssText = dynamicStyles.buttonNormal();
+          sendButton.style.cursor = "pointer"; // Keep the pointer
+        });
+      };
+      // Creating the DOM Elements Styles
+      createInitialElements();
+      createChatStyles();
+      createDynamicStyles();
+      // Chat Logic
+    </script>
+  </body>
+</html>
