@@ -240,10 +240,13 @@
         const messages = document.getElementsByClassName("messages")[0];
         messageButton.addEventListener("click", () => {
           const message = messageInput.value;
-          if (message && message.length > 0) {
+          if (message && message.length > 0 && message.length <= 140) {
             messages.appendChild(createBubble(message, "right"));
             messages.scrollTop = messages.scrollHeight;
+            console.log(message.length);
             messageInput.value = ""; // reset the value
+          } else if (message && message.length > 140) {
+            alert("No puedes enviar un mensaje con mas de 140 caracteres.");
           }
         });
         messageInput.addEventListener("keyup", (event) => {
