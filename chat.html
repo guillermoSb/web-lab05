@@ -4,6 +4,7 @@
   </head>
   <body>
     <script type="application/javascript">
+      let sandbox = true;
       const classes = {
         chat: "chat",
         messages: "messages",
@@ -17,90 +18,175 @@
         text: "txt",
         image: "img",
       };
+      const userName = "Guille";
+      const defaultUserName = "Anonymous";
       const createDiv = () => document.createElement("div");
       const dynamicStyles = {
         buttonNormal: () => {
           return `
-            border-radius: 50%;
-            color: #ffff;
-            border: none;
-            background-color: #48bfe3;
-            padding: 10px;
-            box-shadow: 0 0 4px 2px rgba(83, 144, 217, 0.5);
-            transition: all 0.2s;
-        `;
+                  border-radius: 50%;
+                  color: #ffff;
+                  border: none;
+                  background-color: #48bfe3;
+                  padding: 10px;
+                  box-shadow: 0 0 4px 2px rgba(83, 144, 217, 0.5);
+                  transition: all 0.2s;
+              `;
         },
         inputNormal: () => {
           return `
-            border-radius: 24px;
-            border: none;
-            background-color: rgba(83, 144, 217, 0.2);
-            padding: 10px 20px;
-            flex: 1;
-            margin-right: 24px;
-        `;
+                  border-radius: 24px;
+                  border: none;
+                  background-color: rgba(83, 144, 217, 0.2);
+                  padding: 10px 20px;
+                  flex: 1;
+                  margin-right: 24px;
+              `;
         },
         inputFocus: () => {
           return `
-                outline: none;
-            `;
+                      outline: none;
+                  `;
         },
         buttonHover: () => {
           return `
-                cursor: pointer;
-            `;
+                      cursor: pointer;
+                  `;
         },
         buttonActive: () => {
           return `
-            cursor: pointer;
-            box-shadow: none;
-            `;
+                  cursor: pointer;
+                  box-shadow: none;
+                  `;
         },
         bubbleContainer: (type) => {
           return `
-                justify-content: ${type == "right" ? "end" : "start"};
-            `;
+                      align-items: ${type == "right" ? "end" : "start"};
+                  `;
         },
         bubbleColor: (type) => {
           return `
-                background-color: ${
-                  type == "right" ? "rgb(83, 144, 217)" : "rgb(105, 48, 195)"
-                };
-            `;
+                      background-color: ${
+                        type == "right"
+                          ? "rgb(83, 144, 217)"
+                          : "rgb(105, 48, 195)"
+                      };
+                  `;
         },
         bubbleHover: (type) => {
           return `
-                box-shadow: 0 0 4px 2px ${
-                  type == "right"
-                    ? "rgba(83, 144, 217, 0.5)"
-                    : "rgba(105, 48, 195, 0.5)"
-                };
+                      box-shadow: 0 0 4px 2px ${
+                        type == "right"
+                          ? "rgba(83, 144, 217, 0.5)"
+                          : "rgba(105, 48, 195, 0.5)"
+                      };
 
-            `;
+                  `;
         },
         bubbleNormal: (contentType) => {
           return `
-            padding: ${contentType === contentTypes.text ? "10px 15px" : "8px"};
-            border-radius: 20px;
-            color: #fff;
-            width: fit-content;
-            max-width: 50%;
-            display: block;
-            justify-self: center;
-            line-height: 1.5rem;
-            transition: 0.5s box-shadow;
-            overflow: visible;
-        `;
+                  padding: ${
+                    contentType === contentTypes.text ? "10px 15px" : "8px"
+                  };
+                  border-radius: 20px;
+                  color: #fff;
+                  width: fit-content;
+                  max-width: 50%;
+                  display: flex;
+                  justify-self: center;
+                  line-height: 1.5rem;
+                  transition: 0.5s box-shadow;
+                  overflow: visible;
+              `;
         },
         bubbleImage: () => {
           return `
-                max-width: 100%;
-                border-radius: 20px;
-            `;
+                      max-width: 100%;
+                      border-radius: 20px;
+                  `;
+        },
+        bubbleUserName: () => {
+          return `
+                  color: rgb(105, 48, 195);
+                  text-transform: uppercase;
+                  font-weight: 600;
+                `;
         },
       };
 
-      const createBubble = (content, type, contentType = contentTypes.text) => {
+      const fetchMessages = () => {
+        fetch("http://stw-uvg-22.site:3001/chats")
+          .then((messages) => {
+            return messages.json();
+          })
+          .then((chats) => {
+            const messages = document.getElementsByClassName("messages")[0];
+            let chatsSorted = chats
+              .filter((chat) => chat.chat != undefined)
+              .map((chat) => {
+                return {
+                  content: chat.chat,
+                  user: chat.user.length > 0 ? chat.user : defaultUserName,
+                  date: new Date(chat.date),
+                };
+              })
+              .sort((a, b) => {
+                const dateOne = new Date(a.date);
+                const dateTwo = new Date(b.date);
+                return dateOne.getTime() - dateTwo.getTime();
+              });
+            for (const chat of chatsSorted) {
+              const { content = null, user } = chat;
+              if (content) {
+                const isImage = contentIsImage(content);
+                let contentType = contentTypes.text;
+                if (isImage) {
+                  contentType = contentTypes.image;
+                }
+                messages.appendChild(
+                  createBubble(
+                    content,
+                    user !== userName ? "left" : "right",
+                    contentType,
+                    user
+                  )
+                );
+              }
+            }
+            messages.scrollTop = messages.scrollHeight;
+          })
+          .catch((err) => {
+            console.error("Error fetching");
+          });
+      };
+
+      const sendMessage = (content) => {
+        const message = {
+          user: userName,
+          chat: content,
+        };
+        fetch("http://stw-uvg-22.site:3001/chat", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(message),
+        })
+          .then((response) => {
+            console.log(response.status);
+          })
+          .catch((error) => {
+            console.error(error);
+          });
+      };
+
+      // Create a Chat Bubble
+      const createBubble = (
+        content,
+        type,
+        contentType = contentTypes.text,
+        userName = defaultUserName
+      ) => {
         const bubbleContainer = createDiv();
         bubbleContainer.classList.add(classes.bubbleContainer);
         const bubble = createDiv();
@@ -108,11 +194,13 @@
         bubbleContainer.appendChild(bubble);
         bubbleContainer.style.cssText =
           `
-            width: 100%;
-            display: flex;
-            margin-bottom: 10px;
-            overflow: visible;
-        ` + dynamicStyles.bubbleContainer(type);
+                  width: 100%;
+                  display: flex;
+                  flex-direction: column;
+                  gap: 10px;
+                  margin-bottom: 20px;
+                  overflow: visible;
+              ` + dynamicStyles.bubbleContainer(type);
         bubble.style.cssText =
           dynamicStyles.bubbleNormal(contentType) +
           dynamicStyles.bubbleColor(type);
@@ -124,6 +212,15 @@
             dynamicStyles.bubbleNormal(contentType) +
             dynamicStyles.bubbleColor(type);
         });
+        // Show User name if the bubble is of type left
+        if (type === "left") {
+          // Create an element containing the user name
+          const userSpan = document.createElement("span");
+          userSpan.innerHTML = userName;
+          userSpan.style.cssText = dynamicStyles.bubbleUserName();
+          bubble.parentNode.insertBefore(userSpan, bubble);
+        }
+        // Render the bubble based on the content
         if (contentType === contentTypes.text) {
           bubble.innerHTML = content;
         } else if (contentType === contentTypes.image) {
@@ -170,50 +267,70 @@
         document.body.appendChild(blobDiv1);
         document.body.appendChild(blobDiv2);
       };
+      const validarURL = (str) => {
+        const patron = new RegExp(
+          "^(?:http(s)?:\\/\\/)?[\\w.-]+(?:\\.[\\w\\.-]+)+[\\w\\-\\._~:/?#[\\]@!\\$&'\\(\\)\\*\\+,;=.]+$"
+        );
+        return patron.test(str);
+      };
+      const contentIsImage = (content) => {
+        // Test if the content is an url on the first place
+        if (!validarURL(content)) {
+          return false;
+        }
+        const validImageExtensions = ["jpeg", "jpg", "png", "gif"];
+        const splittedURL = content.toLowerCase().split(".");
+        const extension = splittedURL[splittedURL.length - 1];
+        if (validImageExtensions.includes(extension)) {
+          console.log("image");
+          return true;
+        }
+        return false;
+      };
       // Create Chat Styles
       const createChatStyles = () => {
         document.body.style.cssText += `
-          background-color: #edf2f4;
-          margin: 0px;
-          padding: 0px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-family: sans-serif;
-      `;
+                background-color: #edf2f4;
+                margin: 0px;
+                padding: 0px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-family: sans-serif;
+            `;
 
         const chat = document.getElementsByClassName(classes.chat)[0];
         chat.style.cssText += `
-          border-radius: 24px;
-          width: 70%;
-          height: 60vh;
-          border: 2px solid #000;
-          display: flex;
-          flex-direction: column;
-          justify-content: end;
-          padding: 24px;
-          background: #edf2f4;
-          z-index: 1;
-      `;
+                border-radius: 24px;
+                width: 70%;
+                height: 60vh;
+                border: 2px solid #000;
+                display: flex;
+                flex-direction: column;
+                justify-content: end;
+                padding: 24px;
+                background: #edf2f4;
+                z-index: 1;
+            `;
 
         const messages = document.getElementsByClassName(classes.messages)[0];
         messages.style.cssText += `
-        width: 100%;
-        height: 200px;
-        margin-bottom: 24px;
-        padding: 10px;
-        overflow-x: hidden;
-        overflow-y: auto;
-        flex: 1;
-        `;
+              width: 100%;
+              height: 200px;
+              margin-bottom: 24px;
+              padding: 10px;
+              overflow-x: hidden;
+              overflow-y: auto;
+              flex: 1;
+              `;
         const bar = document.getElementsByClassName(classes.bar)[0];
         bar.style.cssText += `
-        align-self: flex-end;
-        justify-self: center;
-        display: flex;
-        justify-content: space-between;
-        width: 100%;
-        `;
+              align-self: flex-end;
+              justify-self: center;
+              display: flex;
+              justify-content: space-bxetween;
+              width: 100%;
+              `;
         const messageInput = document.getElementById("message");
         message.style.cssText = dynamicStyles.inputNormal();
         const messageButton = document.getElementById("send");
@@ -221,30 +338,30 @@
         const blobDiv1 = document.getElementById("blob1");
         const blobDiv2 = document.getElementById("blob2");
         blobDiv1.style.cssText = `
-            width: 400px;
-            height: 400px;
-            background-image: url('blob.png');
-            overflow: visible;
-            position: fixed;
-            background-size: contain;
-            background-repeat: no-repeat;
-            left: -50px;
-            bottom: -50px;
-            zindex: 0;
-        `;
+                  width: 400px;
+                  height: 400px;
+                  background-image: url('blob.png');
+                  overflow: visible;
+                  position: fixed;
+                  background-size: contain;
+                  background-repeat: no-repeat;
+                  left: -50px;
+                  bottom: -50px;
+                  zindex: 0;
+              `;
         blobDiv2.style.cssText = `
-            width: 400px;
-            height: 400px;
-            background-image: url('blob.png');
-            overflow: visible;
-            position: fixed;
-            background-size: contain;
-            background-repeat: no-repeat;
-            right: -100px;
-            top: -50px;
-            transform: rotate(120deg);
-            zindex: 0;
-        `;
+                  width: 400px;
+                  height: 400px;
+                  background-image: url('blob.png');
+                  overflow: visible;
+                  position: fixed;
+                  background-size: contain;
+                  background-repeat: no-repeat;
+                  right: -100px;
+                  top: -50px;
+                  transform: rotate(120deg);
+                  zindex: 0;
+              `;
       };
       // Some Test bubbles
       const createTestBubbles = () => {
@@ -282,11 +399,20 @@
         const messages = document.getElementsByClassName("messages")[0];
         messageButton.addEventListener("click", () => {
           const message = messageInput.value;
-          if (message && message.length > 0 && message.length <= 140) {
-            messages.appendChild(createBubble(message, "right"));
+          if (message && message.length > 0) {
+            // Decide which content type the message has
+            const isImage = contentIsImage(message);
+            let contentType = contentTypes.text;
+            if (isImage) {
+              contentType = contentTypes.image;
+            }
+            // Create the bubble
+            messages.appendChild(createBubble(message, "right", contentType));
             messages.scrollTop = messages.scrollHeight;
-            console.log(message.length);
             messageInput.value = ""; // reset the value
+            if (!sandbox) {
+              sendMessage(message); // Send the message to the server if not on sandbox mode
+            }
           } else if (message && message.length > 140) {
             // TODO: Cambiar a UI
             alert("No puedes enviar un mensaje con mas de 140 caracteres.");
@@ -302,16 +428,17 @@
         });
       };
 
-      const sendMessage = (content) => {
-        createBubble(content, "right");
-      };
       // Creating the DOM Elements Styles
       createInitialElements();
       createChatStyles();
       createDynamicStyles();
       createSendEventListeners();
-      createTestBubbles();
+      // createTestBubbles();
       // Chat Logic
+      // createTestBubbles();
+      if (!sandbox) {
+        fetchMessages(); // Initial fetch of messages
+      }
     </script>
   </body>
 </html>
