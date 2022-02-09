@@ -59,7 +59,6 @@
         bubbleContainer: (type) => {
           return `
                 justify-content: ${type == "right" ? "end" : "start"};
-
             `;
         },
         bubbleColor: (type) => {
@@ -155,21 +154,32 @@
         messageInput.classList.add(classes.barInput);
         barContainer.appendChild(messageInput);
         // Bottom bar button
-        let messageButton = document.createElement("button");
+        const messageButton = document.createElement("button");
         messageButton.id = "send";
-        messageButton.innerHTML = "→";
+        messageButton.innerHTML = "&rarr;";
         messageButton.classList.add(classes.barButton);
         barContainer.appendChild(messageButton);
         chatContainer.appendChild(barContainer);
         // Appending all the DOM Initial Nodes
         document.body.appendChild(chatContainer);
+        // Creating blob div
+        const blobDiv1 = createDiv();
+        blobDiv1.id = "blob1";
+        const blobDiv2 = createDiv();
+        blobDiv2.id = "blob2";
+        document.body.appendChild(blobDiv1);
+        document.body.appendChild(blobDiv2);
       };
+      // Create Chat Styles
       const createChatStyles = () => {
         document.body.style.cssText += `
           background-color: #edf2f4;
+          margin: 0px;
+          padding: 0px;
           display: flex;
           align-items: center;
           justify-content: center;
+          font-family: sans-serif;
       `;
 
         const chat = document.getElementsByClassName(classes.chat)[0];
@@ -182,6 +192,8 @@
           flex-direction: column;
           justify-content: end;
           padding: 24px;
+          background: #edf2f4;
+          z-index: 1;
       `;
 
         const messages = document.getElementsByClassName(classes.messages)[0];
@@ -189,6 +201,7 @@
         width: 100%;
         height: 200px;
         margin-bottom: 24px;
+        padding: 10px;
         overflow-x: hidden;
         overflow-y: auto;
         flex: 1;
@@ -205,7 +218,35 @@
         message.style.cssText = dynamicStyles.inputNormal();
         const messageButton = document.getElementById("send");
         messageButton.style.cssText = dynamicStyles.buttonNormal();
+        const blobDiv1 = document.getElementById("blob1");
+        const blobDiv2 = document.getElementById("blob2");
+        blobDiv1.style.cssText = `
+            width: 400px;
+            height: 400px;
+            background-image: url('blob.png');
+            overflow: visible;
+            position: fixed;
+            background-size: contain;
+            background-repeat: no-repeat;
+            left: -50px;
+            bottom: -50px;
+            zindex: 0;
+        `;
+        blobDiv2.style.cssText = `
+            width: 400px;
+            height: 400px;
+            background-image: url('blob.png');
+            overflow: visible;
+            position: fixed;
+            background-size: contain;
+            background-repeat: no-repeat;
+            right: -100px;
+            top: -50px;
+            transform: rotate(120deg);
+            zindex: 0;
+        `;
       };
+      // Some Test bubbles
       const createTestBubbles = () => {
         const messages = document.getElementsByClassName("messages")[0];
         const bubbleContainer1 = createBubble("Hello!", "right");
@@ -217,6 +258,7 @@
         messages.appendChild(bubbleContainer1);
         messages.appendChild(bubbleContainer2);
       };
+      // Add dynamic elements
       const createDynamicStyles = () => {
         const messageInput = document.getElementById("message");
         messageInput.addEventListener("focus", () => {
