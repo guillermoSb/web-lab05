@@ -1,12 +1,13 @@
 <html>
-  <head>
-    <!-- <link rel="stylesheet" href="styles.css" /> -->
-  </head>
+  <head> </head>
   <body>
     <script type="application/javascript">
       let sandbox = true;
+      let darkMode = false;
+      var refreshInterval = null;
       const classes = {
         chat: "chat",
+        chatOptions: "chat_options",
         messages: "messages",
         bar: "bar",
         barInput: "bar_input",
@@ -18,7 +19,7 @@
         text: "txt",
         image: "img",
       };
-      const userName = "Guille";
+      const userName = "Server";
       const defaultUserName = "Anonymous";
       const createDiv = () => document.createElement("div");
       const dynamicStyles = {
@@ -61,7 +62,9 @@
         },
         bubbleContainer: (type) => {
           return `
-                      align-items: ${type == "right" ? "end" : "start"};
+                      align-items: ${
+                        type == "right" ? "flex-end" : "flex-start"
+                      };
                   `;
         },
         bubbleColor: (type) => {
@@ -92,7 +95,12 @@
                   color: #fff;
                   width: fit-content;
                   max-width: 50%;
-                  display: flex;
+                  display:-webkit-flex;
+                  display:-webkit-box;
+                  display:-moz-flex;
+                  display:-moz-box;
+                  display:-ms-flexbox;
+                  display:flex;
                   justify-self: center;
                   line-height: 1.5rem;
                   transition: 0.5s box-shadow;
@@ -121,6 +129,7 @@
           })
           .then((chats) => {
             const messages = document.getElementsByClassName("messages")[0];
+            messages.innerHTML = "";
             let chatsSorted = chats
               .filter((chat) => chat.chat != undefined)
               .map((chat) => {
@@ -135,6 +144,7 @@
                 const dateTwo = new Date(b.date);
                 return dateOne.getTime() - dateTwo.getTime();
               });
+            console.log("Sorted chats", chatsSorted);
             for (const chat of chatsSorted) {
               const { content = null, user } = chat;
               if (content) {
@@ -195,7 +205,12 @@
         bubbleContainer.style.cssText =
           `
                   width: 100%;
-                  display: flex;
+                  display:-webkit-flex;
+                  display:-webkit-box;
+                  display:-moz-flex;
+                  display:-moz-box;
+                  display:-ms-flexbox;
+                  display:flex;
                   flex-direction: column;
                   gap: 10px;
                   margin-bottom: 20px;
@@ -236,6 +251,34 @@
       const createInitialElements = () => {
         let chatContainer = createDiv();
         chatContainer.classList.add(classes.chat);
+        // Create chat header
+        let chatOptions = createDiv();
+        chatOptions.classList.add(classes.chatOptions);
+        chatContainer.appendChild(chatOptions);
+        // Create Refresh Settings
+        let chatRefreshContainer = createDiv();
+        let chatRefreshCheckbox = document.createElement("input");
+        chatRefreshCheckbox.setAttribute("type", "checkbox");
+        chatRefreshCheckbox.setAttribute("name", "refresh");
+        chatRefreshCheckbox.setAttribute("id", "refreshCheckbox");
+        chatRefreshCheckbox.addEventListener("click", resetRefreshInterval); // Set event listener for the refresh box
+        let chatRefreshCheckboxLabel = document.createElement("label");
+        chatRefreshCheckboxLabel.innerHTML = "Auto Refresh (10s)";
+        chatRefreshCheckboxLabel.appendChild(chatRefreshCheckbox);
+        chatRefreshContainer.appendChild(chatRefreshCheckboxLabel);
+        chatOptions.appendChild(chatRefreshContainer);
+        // Dark Mode Settings
+        let chatDarkModeContainer = createDiv();
+        let chatDarkModeCheckbox = document.createElement("input");
+        chatDarkModeCheckbox.setAttribute("type", "checkbox");
+        chatDarkModeCheckbox.setAttribute("name", "darkMode");
+        chatDarkModeCheckbox.setAttribute("id", "darkModeCheckbox");
+        chatDarkModeCheckbox.addEventListener("click", switchTheme); // Set event listener for mode
+        let chatDarkModeCheckboxLabel = document.createElement("label");
+        chatDarkModeCheckboxLabel.innerHTML = "Dark Mode";
+        chatDarkModeCheckboxLabel.appendChild(chatDarkModeCheckbox);
+        chatDarkModeContainer.appendChild(chatDarkModeCheckboxLabel);
+        chatOptions.appendChild(chatDarkModeContainer);
         // Messages
         let messagesContainer = createDiv();
         messagesContainer.classList.add(classes.messages);
@@ -276,13 +319,13 @@
       const contentIsImage = (content) => {
         // Test if the content is an url on the first place
         if (!validarURL(content)) {
+          console.log("Not URL");
           return false;
         }
         const validImageExtensions = ["jpeg", "jpg", "png", "gif"];
         const splittedURL = content.toLowerCase().split(".");
         const extension = splittedURL[splittedURL.length - 1];
         if (validImageExtensions.includes(extension)) {
-          console.log("image");
           return true;
         }
         return false;
@@ -293,26 +336,53 @@
                 background-color: #edf2f4;
                 margin: 0px;
                 padding: 0px;
-                display: flex;
+                display:-webkit-flex;
+                display:-webkit-box;
+                display:-moz-flex;
+                display:-moz-box;
+                display:-ms-flexbox;
+                display:flex;
                 align-items: center;
                 justify-content: center;
+                transition: background-color 0.5s;
                 font-family: sans-serif;
+
             `;
 
         const chat = document.getElementsByClassName(classes.chat)[0];
         chat.style.cssText += `
                 border-radius: 24px;
                 width: 70%;
-                height: 60vh;
+                height: 80vh;
                 border: 2px solid #000;
-                display: flex;
+                display:-webkit-flex;
+                display:-webkit-box;
+                display:-moz-flex;
+                display:-moz-box;
+                display:-ms-flexbox;
+                display:flex;
                 flex-direction: column;
                 justify-content: end;
                 padding: 24px;
+                transition: background-color 0.5s, border 0.5s;
                 background: #edf2f4;
                 z-index: 1;
             `;
-
+        const chatOptions = document.getElementsByClassName(
+          classes.chatOptions
+        )[0];
+        chatOptions.style.cssText = `
+                width: 100%;
+                height: 40px;
+                transition: color 0.5s;
+                display:-webkit-flex;
+                display:-webkit-box;
+                display:-moz-flex;
+                display:-moz-box;
+                display:-ms-flexbox;
+                justify-content: space-between;
+                display:flex;
+        `;
         const messages = document.getElementsByClassName(classes.messages)[0];
         messages.style.cssText += `
               width: 100%;
@@ -327,7 +397,12 @@
         bar.style.cssText += `
               align-self: flex-end;
               justify-self: center;
-              display: flex;
+              display:-webkit-flex;
+                  display:-webkit-box;
+                  display:-moz-flex;
+                  display:-moz-box;
+                  display:-ms-flexbox;
+                  display:flex;
               justify-content: space-bxetween;
               width: 100%;
               `;
@@ -405,6 +480,9 @@
             let contentType = contentTypes.text;
             if (isImage) {
               contentType = contentTypes.image;
+            } else if (message.length > 140) {
+              alert("INVALID!");
+              return;
             }
             // Create the bubble
             messages.appendChild(createBubble(message, "right", contentType));
@@ -428,12 +506,49 @@
         });
       };
 
+      const resetRefreshInterval = () => {
+        const refreshCheckbox = document.getElementById("refreshCheckbox");
+        // Only refresh the interval if the chat is not in sandbox mode.
+        if (sandbox) {
+          return;
+        }
+
+        if (refreshCheckbox.checked) {
+          refreshInterval = setInterval(fetchMessages, 10000);
+        } else {
+          clearInterval(refreshInterval);
+        }
+      };
+
+      const switchTheme = () => {
+        darkMode = !darkMode;
+        const chatOptions = document.getElementsByClassName(
+          classes.chatOptions
+        )[0];
+        const chatContainer = document.getElementsByClassName(classes.chat)[0];
+        const messageInput = document.getElementById("message");
+        if (darkMode) {
+          document.body.style.backgroundColor = "#25254B";
+          chatContainer.style.backgroundColor = "#25254B";
+          chatOptions.style.color = "#fff";
+          chatContainer.style.border = "2px solid #e7e7e7";
+          messageInput.style.color = "#fff";
+        } else {
+          document.body.style.backgroundColor = "#edf2f4";
+          chatContainer.style.backgroundColor = "#edf2f4";
+          chatOptions.style.color = "#000";
+          chatContainer.style.border = "2px solid #000";
+          messageInput.style.color = "#000";
+        }
+      };
+
       // Creating the DOM Elements Styles
       createInitialElements();
       createChatStyles();
       createDynamicStyles();
       createSendEventListeners();
-      // createTestBubbles();
+      createTestBubbles();
+      resetRefreshInterval();
       // Chat Logic
       // createTestBubbles();
       if (!sandbox) {
