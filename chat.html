@@ -150,7 +150,8 @@
               .map((chat) => {
                 return {
                   content: chat.chat,
-                  user: `${
+                  user: `${chat.user.length > 0 ? chat.user : defaultUserName}`,
+                  userWithDate: `${
                     chat.user.length > 0 ? chat.user : defaultUserName
                   } - ${new Date(chat.date).toLocaleDateString([], {
                     hour: "numeric",
@@ -166,9 +167,8 @@
                 const dateTwo = new Date(b.date);
                 return dateOne.getTime() - dateTwo.getTime();
               });
-            console.log("Sorted chats", chatsSorted);
             for (const chat of chatsSorted) {
-              const { content = null, user } = chat;
+              const { content = null, user, userWithDate } = chat;
               if (content) {
                 const isImage = contentIsImage(content);
                 let contentType = contentTypes.text;
@@ -180,7 +180,7 @@
                     content,
                     user !== userName ? "left" : "right",
                     contentType,
-                    user
+                    userWithDate
                   )
                 );
               }
@@ -188,6 +188,7 @@
             messages.scrollTop = messages.scrollHeight;
           })
           .catch((err) => {
+            console.log(err);
             console.error("Error fetching");
           });
       };
