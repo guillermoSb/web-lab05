@@ -150,7 +150,14 @@
               .map((chat) => {
                 return {
                   content: chat.chat,
-                  user: chat.user.length > 0 ? chat.user : defaultUserName,
+                  user: `${
+                    chat.user.length > 0 ? chat.user : defaultUserName
+                  } - ${new Date(chat.date).toLocaleDateString([], {
+                    hour: "numeric",
+                    minute: "numeric",
+                    day: "2-digit",
+                    month: "2-digit",
+                  })}`,
                   date: new Date(chat.date),
                 };
               })
@@ -579,7 +586,7 @@
           chatOptions.style.color = "#000";
           chatContainer.style.border = "2px solid #000";
           messageInput.style.color = "#000";
-          filterInput.style.color = "#000";
+          filterInputgit.style.color = "#000";
         }
       };
 
