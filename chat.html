@@ -2,8 +2,9 @@
   <head> </head>
   <body>
     <script type="application/javascript">
-      let sandbox = true;
+      let sandbox = false;
       let darkMode = false;
+      let filter = "";
       var refreshInterval = null;
       const classes = {
         chat: "chat",
@@ -19,7 +20,7 @@
         text: "txt",
         image: "img",
       };
-      const userName = "Server";
+      const userName = "_";
       const defaultUserName = "Anonymous";
       const createDiv = () => document.createElement("div");
       const dynamicStyles = {
@@ -123,6 +124,9 @@
       };
 
       const fetchMessages = () => {
+        if (sandbox) {
+          return;
+        }
         fetch("http://stw-uvg-22.site:3001/chats")
           .then((messages) => {
             return messages.json();
@@ -132,6 +136,17 @@
             messages.innerHTML = "";
             let chatsSorted = chats
               .filter((chat) => chat.chat != undefined)
+              .filter((chat) => {
+                if (filter.length <= 0) {
+                  return true;
+                } else if (
+                  chat.user.toLowerCase() === filter.toLocaleLowerCase()
+                ) {
+                  return true;
+                } else {
+                  return false;
+                }
+              })
               .map((chat) => {
                 return {
                   content: chat.chat,
@@ -279,6 +294,16 @@
         chatDarkModeCheckboxLabel.appendChild(chatDarkModeCheckbox);
         chatDarkModeContainer.appendChild(chatDarkModeCheckboxLabel);
         chatOptions.appendChild(chatDarkModeContainer);
+        // Filter Chats Settings
+        let filterInput = document.createElement("input");
+        filterInput.setAttribute(
+          "placeholder",
+          "Filtra por nombre de usuario: "
+        );
+        filterInput.setAttribute("type", "text");
+        filterInput.id = "filter";
+        filterInput.classList.add(classes.barInput);
+        chatOptions.appendChild(filterInput);
         // Messages
         let messagesContainer = createDiv();
         messagesContainer.classList.add(classes.messages);
@@ -319,7 +344,6 @@
       const contentIsImage = (content) => {
         // Test if the content is an url on the first place
         if (!validarURL(content)) {
-          console.log("Not URL");
           return false;
         }
         const validImageExtensions = ["jpeg", "jpg", "png", "gif"];
@@ -381,6 +405,7 @@
                 display:-moz-box;
                 display:-ms-flexbox;
                 justify-content: space-between;
+                align-items: center;
                 display:flex;
         `;
         const messages = document.getElementsByClassName(classes.messages)[0];
@@ -408,6 +433,11 @@
               `;
         const messageInput = document.getElementById("message");
         message.style.cssText = dynamicStyles.inputNormal();
+        const filterInput = document.getElementById("filter");
+        filterInput.style.cssText = dynamicStyles.inputNormal();
+        filterInput.style.flex = "0.5";
+        filterInput.style.marginRight = "0";
+
         const messageButton = document.getElementById("send");
         messageButton.style.cssText = dynamicStyles.buttonNormal();
         const blobDiv1 = document.getElementById("blob1");
@@ -470,6 +500,7 @@
       };
       const createSendEventListeners = () => {
         const messageInput = document.getElementById("message");
+        const filterInput = document.getElementById("filter");
         const messageButton = document.getElementById("send");
         const messages = document.getElementsByClassName("messages")[0];
         messageButton.addEventListener("click", () => {
@@ -496,12 +527,19 @@
             alert("No puedes enviar un mensaje con mas de 140 caracteres.");
           }
         });
+
         messageInput.addEventListener("keyup", (event) => {
-          // Number 13 is the "Enter" key on the keyboard
+          // Validar si la key es un enter
           if (event.keyCode === 13) {
-            // Cancel the default action, if needed
-            event.preventDefault();
             messageButton.click();
+          }
+        });
+        filterInput.addEventListener("keyup", (event) => {
+          // Validar si la key es un enter
+          if (event.keyCode === 13) {
+            filter = filterInput.value;
+            console.log(`filter is ${filter}`);
+            fetchMessages();
           }
         });
       };
@@ -527,18 +565,21 @@
         )[0];
         const chatContainer = document.getElementsByClassName(classes.chat)[0];
         const messageInput = document.getElementById("message");
+        const filterInput = document.getElementById("filter");
         if (darkMode) {
           document.body.style.backgroundColor = "#25254B";
           chatContainer.style.backgroundColor = "#25254B";
           chatOptions.style.color = "#fff";
           chatContainer.style.border = "2px solid #e7e7e7";
           messageInput.style.color = "#fff";
+          filterInput.style.color = "#fff";
         } else {
           document.body.style.backgroundColor = "#edf2f4";
           chatContainer.style.backgroundColor = "#edf2f4";
           chatOptions.style.color = "#000";
           chatContainer.style.border = "2px solid #000";
           messageInput.style.color = "#000";
+          filterInput.style.color = "#000";
         }
       };
 
@@ -551,9 +592,8 @@
       resetRefreshInterval();
       // Chat Logic
       // createTestBubbles();
-      if (!sandbox) {
-        fetchMessages(); // Initial fetch of messages
-      }
+
+      fetchMessages(); // Initial fetch of messages
     </script>
   </body>
 </html>
