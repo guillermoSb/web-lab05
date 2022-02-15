@@ -570,7 +570,6 @@
             if (isImage) {
               contentType = contentTypes.image;
             } else if (validarURL(message)) {
-              console.log("not url");
               contentType = contentTypes.web;
             } else if (message.length > 140) {
               alert("No puedes enviar un mensaje con mas de 140 caracteres.");
