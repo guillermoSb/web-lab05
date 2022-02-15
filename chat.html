@@ -19,8 +19,9 @@
       const contentTypes = {
         text: "txt",
         image: "img",
+        web: "web",
       };
-      const userName = "_";
+      const userName = "ChatUser";
       const defaultUserName = "Anonymous";
       const createDiv = () => document.createElement("div");
       const dynamicStyles = {
@@ -59,6 +60,7 @@
           return `
                   cursor: pointer;
                   box-shadow: none;
+                  transform: rotate(360deg);
                   `;
         },
         bubbleContainer: (type) => {
@@ -106,6 +108,7 @@
                   line-height: 1.5rem;
                   transition: 0.5s box-shadow;
                   word-break: break-all;
+                  
              
               `;
         },
@@ -113,6 +116,16 @@
           return `
                       max-width: 100%;
                       border-radius: 20px;
+          
+                  `;
+        },
+        bubbleIframe: () => {
+          return `
+                      max-width: 100%;
+                      border-radius: 20px;
+                      border: 0;
+                      pointer-events: none;
+                     
                   `;
         },
         bubbleUserName: () => {
@@ -126,8 +139,10 @@
 
       const fetchMessages = () => {
         if (sandbox) {
+          alert("You are in sandbox mode");
           return;
         }
+        console.log("Fetching...");
         fetch("http://stw-uvg-22.site:3001/chats")
           .then((messages) => {
             return messages.json();
@@ -138,11 +153,12 @@
             let chatsSorted = chats
               .filter((chat) => chat.chat != undefined)
               .filter((chat) => {
+                if (!chat.user) {
+                  return false;
+                }
                 if (filter.length <= 0) {
                   return true;
-                } else if (
-                  chat.user.toLowerCase() === filter.toLocaleLowerCase()
-                ) {
+                } else if (chat.user.toLowerCase() === filter.toLowerCase()) {
                   return true;
                 } else {
                   return false;
@@ -175,7 +191,10 @@
                 let contentType = contentTypes.text;
                 if (isImage) {
                   contentType = contentTypes.image;
+                } else if (validarURL(content)) {
+                  contentType = contentTypes.web;
                 }
+
                 messages.appendChild(
                   createBubble(
                     content,
@@ -260,6 +279,7 @@
           bubble.parentNode.insertBefore(userSpan, bubble);
         }
         // Render the bubble based on the content
+        console.log(contentType);
         if (contentType === contentTypes.text) {
           bubble.innerHTML = content;
         } else if (contentType === contentTypes.image) {
@@ -267,7 +287,19 @@
           image.setAttribute("src", content);
           image.setAttribute("alt", content);
           image.style.cssText = dynamicStyles.bubbleImage();
+          bubble.addEventListener("click", () => {
+            window.open(content, "_blank");
+          });
           bubble.appendChild(image); // Custom padding when rendering images
+        } else if (contentType === contentTypes.web) {
+          const iFrame = document.createElement("iframe");
+          iFrame.style.cssText = dynamicStyles.bubbleIframe();
+          iFrame.src = content;
+          bubble.addEventListener("click", () => {
+            console.log("click");
+            window.open(content, "_blank");
+          });
+          bubble.appendChild(iFrame);
         }
         return bubbleContainer;
       };
@@ -303,11 +335,25 @@
         chatDarkModeCheckboxLabel.appendChild(chatDarkModeCheckbox);
         chatDarkModeContainer.appendChild(chatDarkModeCheckboxLabel);
         chatOptions.appendChild(chatDarkModeContainer);
+
+        // SandBox Settings
+        let chatSandBoxContainer = createDiv();
+        let chatSandBoxCheckBox = document.createElement("input");
+        chatSandBoxCheckBox.checked = sandbox;
+        chatSandBoxCheckBox.setAttribute("type", "checkbox");
+        chatSandBoxCheckBox.setAttribute("name", "darkMode");
+        chatSandBoxCheckBox.setAttribute("id", "sandBoxCheckBox");
+        chatSandBoxCheckBox.addEventListener("click", switchMode); // Set event listener for mode
+        let chatSandBoxCheckBoxLabel = document.createElement("label");
+        chatSandBoxCheckBoxLabel.innerHTML = "Sandbox";
+        chatSandBoxCheckBoxLabel.appendChild(chatSandBoxCheckBox);
+        chatSandBoxContainer.appendChild(chatSandBoxCheckBoxLabel);
+        chatOptions.appendChild(chatSandBoxContainer);
         // Filter Chats Settings
         let filterInput = document.createElement("input");
         filterInput.setAttribute(
           "placeholder",
-          "Filtra por nombre de usuario: "
+          "Filtra por nombre de usuario (enter): "
         );
         filterInput.setAttribute("type", "text");
         filterInput.id = "filter";
@@ -502,6 +548,9 @@
         sendButton.addEventListener("mousedown", () => {
           sendButton.style.cssText += dynamicStyles.buttonActive();
         });
+        sendButton.addEventListener("mouseleave", () => {
+          sendButton.style.cssText = dynamicStyles.buttonNormal();
+        });
         sendButton.addEventListener("mouseup", () => {
           sendButton.style.cssText = dynamicStyles.buttonNormal();
           sendButton.style.cursor = "pointer"; // Keep the pointer
@@ -520,8 +569,11 @@
             let contentType = contentTypes.text;
             if (isImage) {
               contentType = contentTypes.image;
+            } else if (validarURL(message)) {
+              console.log("not url");
+              contentType = contentTypes.web;
             } else if (message.length > 140) {
-              alert("INVALID!");
+              alert("No puedes enviar un mensaje con mas de 140 caracteres.");
               return;
             }
             // Create the bubble
@@ -531,13 +583,18 @@
             if (!sandbox) {
               sendMessage(message); // Send the message to the server if not on sandbox mode
             }
-          } else if (message && message.length > 140) {
-            // TODO: Cambiar a UI
-            alert("No puedes enviar un mensaje con mas de 140 caracteres.");
           }
         });
 
         messageInput.addEventListener("keyup", (event) => {
+          if (
+            messageInput.value.length > 140 &&
+            !validarURL(messageInput.value)
+          ) {
+            messageInput.style.border = "1px solid red";
+          } else {
+            messageInput.style.border = "none";
+          }
           // Validar si la key es un enter
           if (event.keyCode === 13) {
             messageButton.click();
@@ -547,7 +604,7 @@
           // Validar si la key es un enter
           if (event.keyCode === 13) {
             filter = filterInput.value;
-            console.log(`filter is ${filter}`);
+
             fetchMessages();
           }
         });
@@ -565,6 +622,16 @@
         } else {
           clearInterval(refreshInterval);
         }
+      };
+
+      const switchMode = () => {
+        const messages = document.getElementsByClassName("messages")[0];
+        messages.innerHTML = "";
+        sandbox = !sandbox;
+        if (sandbox) {
+          createTestBubbles();
+        }
+        fetchMessages();
       };
 
       const switchTheme = () => {
@@ -588,7 +655,7 @@
           chatOptions.style.color = "#000";
           chatContainer.style.border = "2px solid #000";
           messageInput.style.color = "#000";
-          filterInputgit.style.color = "#000";
+          filterInput.style.color = "#000";
         }
       };
 
@@ -597,11 +664,12 @@
       createChatStyles();
       createDynamicStyles();
       createSendEventListeners();
-      createTestBubbles();
       resetRefreshInterval();
       // Chat Logic
       // createTestBubbles();
-
+      if (sandbox) {
+        createTestBubbles();
+      }
       fetchMessages(); // Initial fetch of messages
     </script>
   </body>
